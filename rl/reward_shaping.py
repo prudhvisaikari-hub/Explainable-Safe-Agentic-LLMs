@@ -28,7 +28,7 @@ class RewardShaper:
         self,
         state: Dict[str, Any],
         action: int,
-        next_state: Dict[str, Any],
+        info: Dict[str, Any],
         done: bool
     ) -> Tuple[float, Dict[str, float]]:
         """Compute shaped reward with component breakdown."""
@@ -41,7 +41,7 @@ class RewardShaper:
         r_success = 0.0
 
         # Safety reward based on constraint satisfaction
-        safety_violation = next_state.get('safety_violation', False)
+        safety_violation = info.get('safety_violation', False)
         if not safety_violation:
             r_safety = self.safety_bonus
         else:
@@ -49,7 +49,7 @@ class RewardShaper:
         components['safety'] = r_safety
 
         # Efficiency reward based on response time
-        response_time = next_state.get('response_time', 100)
+        response_time = info.get('response_time', 100)
         if response_time < 30:
             r_efficiency = self.efficiency_bonus
         elif response_time < 60:
@@ -60,7 +60,7 @@ class RewardShaper:
 
         # Success reward on episode completion
         if done:
-            success = next_state.get('success', False)
+            success = info.get('success', False)
             if success:
                 r_success = self.success_reward
             else:
@@ -77,12 +77,12 @@ class RewardShaper:
     def compute_potential_based_shaping(
         self,
         state: Dict[str, Any],
-        next_state: Dict[str, Any],
+        info: Dict[str, Any],
         gamma: float = 0.99
     ) -> float:
         """Compute potential-based reward shaping (Ng et al. 1999)."""
         phi_state = self._state_potential(state)
-        phi_next = self._state_potential(next_state)
+        phi_next = self._state_potential(info)
         return gamma * phi_next - phi_state
 
     def _state_potential(self, state: Dict[str, Any]) -> float:
